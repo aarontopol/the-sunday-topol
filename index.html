@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Sunday Topol — Crosswords</title>
+<meta name="description" content="Two hundred original crosswords: 15×15 easy dailies and 21×21 Sunday-sized mediums.">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   The Sunday Topol — editorial newsprint design system
+   paper cream · ink black · masthead serif · spot red accent
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+
+:root {
+  --paper: #f8f5ec;
+  --paper-deep: #f1ecdf;
+  --ink: #17140e;
+  --ink-soft: #5b554a;
+  --rule: #c9c2b2;
+  --red: #8f2d2b;
+  --red-soft: #f0dcd6;
+  --gold: #a3742a;
+  --gold-soft: #f2e3c2;
+  --gold-mid: #e2bf7d;
+  --green: #2e5b3f;
+  --blue: #2d5b8f;
+  --serif: "Playfair Display", Georgia, serif;
+  --body: Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", "Courier New", monospace;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: var(--body);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.page { max-width: 1120px; margin: 0 auto; padding: 0 18px 40px; }
+
+/* ---------- masthead ---------- */
+.masthead { text-align: center; padding: 26px 0 0; }
+.masthead .dateline {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.masthead .dateline::before, .masthead .dateline::after {
+  content: ""; flex: 1; border-top: 1px solid var(--rule);
+}
+.masthead h1 {
+  font-family: var(--serif); font-weight: 900; letter-spacing: 0.01em;
+  font-size: clamp(2.1rem, 6.5vw, 3.6rem); margin: 6px 0 2px;
+}
+.masthead .motto {
+  font-style: italic; color: var(--ink-soft); font-size: 0.98rem;
+}
+.masthead .thickrule {
+  border-top: 3px solid var(--ink); border-bottom: 1px solid var(--ink);
+  height: 6px; margin: 14px 0 0;
+}
+
+/* ---------- home sections ---------- */
+.editions {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 26px; margin-top: 30px;
+}
+.edition {
+  border: 1.5px solid var(--ink); background: #fffdf6; cursor: pointer;
+  text-align: left; font-family: inherit; color: inherit; padding: 0;
+  transition: transform .12s ease, box-shadow .12s ease;
+  box-shadow: 4px 4px 0 var(--paper-deep);
+}
+.edition:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 var(--gold-soft); }
+.edition .kicker {
+  display: block; text-align: center; font-size: 0.7rem; letter-spacing: 0.22em;
+  text-transform: uppercase; padding: 10px 0 0; color: var(--red);
+  font-family: var(--mono);
+}
+.edition h2 {
+  font-family: var(--serif); font-weight: 700; text-align: center;
+  font-size: 1.9rem; padding: 2px 16px 0;
+}
+.edition .spec {
+  text-align: center; font-style: italic; color: var(--ink-soft);
+  padding: 2px 16px 12px; border-bottom: 1px solid var(--rule);
+}
+.edition .minigrid {
+  display: grid; width: 96px; margin: 14px auto 4px; gap: 2px;
+  grid-template-columns: repeat(5, 1fr);
+}
+.edition .minigrid i { aspect-ratio: 1; background: var(--paper-deep); border: 1px solid var(--rule); }
+.edition .minigrid i.b { background: var(--ink); border-color: var(--ink); }
+.edition .tally {
+  display: flex; justify-content: space-around; padding: 12px 14px 16px;
+  text-align: center;
+}
+.edition .tally div { flex: 1; }
+.edition .tally .n { font-family: var(--serif); font-weight: 900; font-size: 1.55rem; display: block; }
+.edition .tally .lbl {
+  font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+}
+.edition .tally .n.done { color: var(--green); }
+.edition .tally .n.prog { color: var(--gold); }
+.footer-note {
+  text-align: center; color: var(--ink-soft); font-style: italic;
+  margin-top: 34px; font-size: 0.9rem;
+}
+
+/* ---------- toolbar (list + puzzle pages) ---------- */
+.toolbar {
+  display: flex; align-items: center; gap: 10px; padding: 14px 0 10px;
+  border-bottom: 3px double var(--ink); margin-bottom: 16px;
+}
+.toolbar h2 {
+  flex: 1; text-align: center; font-family: var(--serif); font-weight: 700;
+  font-size: clamp(1.05rem, 3.4vw, 1.5rem); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.clock {
+  font-family: var(--mono); font-weight: 700; font-size: 1.02rem;
+  border: 1.5px solid var(--ink); padding: 5px 10px; background: #fffdf6;
+  min-width: 82px; text-align: center;
+}
+.clock.paused { opacity: 0.4; }
+.toolbar .spacer { min-width: 82px; }
+
+.btn {
+  font-family: var(--mono); font-size: 0.8rem; font-weight: 500;
+  letter-spacing: 0.03em; padding: 8px 13px; cursor: pointer;
+  border: 1.5px solid var(--ink); background: #fffdf6; color: var(--ink);
+  transition: background .1s ease;
+}
+.btn:hover { background: var(--gold-soft); }
+.btn.red { background: var(--red); border-color: var(--red); color: var(--paper); }
+.btn.red:hover { background: #7a2422; }
+.btn.plain { border-color: transparent; background: transparent; }
+.btn.plain:hover { background: var(--red-soft); }
+
+/* ---------- puzzle index ---------- */
+.legend {
+  display: flex; gap: 20px; justify-content: center; margin-bottom: 14px;
+  font-size: 0.8rem; color: var(--ink-soft); font-family: var(--mono);
+}
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border: 1px solid var(--ink); }
+.legend i.done { background: var(--green); border-color: var(--green); }
+.legend i.prog { background: var(--gold-mid); border-color: var(--gold); }
+.legend i.fresh { background: #fffdf6; }
+
+.index-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 9px;
+}
+.pz {
+  aspect-ratio: 1; border: 1.5px solid var(--ink); background: #fffdf6;
+  font-family: var(--serif); font-weight: 700; font-size: 1.05rem;
+  color: var(--ink); cursor: pointer; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: transform .1s ease;
+}
+.pz:hover { transform: scale(1.07); background: var(--gold-soft); }
+.pz.done { background: var(--green); border-color: var(--green); color: var(--paper); }
+.pz.prog { background: var(--gold-mid); border-color: var(--gold); }
+.pz .t { font-family: var(--mono); font-weight: 500; font-size: 0.56rem; margin-top: 1px; }
+
+/* ---------- solving page ---------- */
+.solve {
+  display: flex; gap: 26px; align-items: flex-start; flex-wrap: wrap;
+  justify-content: center;
+}
+.left { flex: 0 1 560px; max-width: 100%; min-width: 0; }
+.right { flex: 1 1 320px; min-width: 280px; display: flex; gap: 22px; flex-wrap: wrap; }
+
+.board-wrap { overflow-x: auto; }
+.board {
+  display: grid; gap: 0; margin: 0 auto; width: 100%; max-width: 560px;
+  aspect-ratio: 1; border: 2.5px solid var(--ink); background: var(--ink);
+  touch-action: manipulation;
+}
+.board.sz21 { min-width: 420px; }
+.sq { position: relative; background: var(--ink); }
+.sq.open { background: #fffdf6; cursor: pointer; box-shadow: inset 0 0 0 0.5px var(--rule); }
+.sq.open.word { background: var(--gold-soft); }
+.sq.open.here { background: var(--gold-mid); }
+.sq .n {
+  position: absolute; top: 0; left: 1.5px; font-family: var(--mono);
+  font-size: clamp(5px, 1.25vw, 8.5px); font-weight: 500; color: var(--ink-soft);
+  pointer-events: none;
+}
+.sq .l {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--body); font-weight: 700;
+  font-size: clamp(9px, 2.6vw, 21px); pointer-events: none;
+}
+.board.sz21 .sq .l { font-size: clamp(8px, 2vw, 16px); }
+.sq.bad .l { color: var(--red); }
+.sq.bad::after {
+  content: ""; position: absolute; left: 15%; right: 15%; top: 50%;
+  border-top: 2px solid var(--red); transform: rotate(-45deg); opacity: 0.5;
+  pointer-events: none;
+}
+.sq.shown .l { color: var(--blue); }
+
+.nowclue {
+  margin: 12px auto 0; max-width: 560px; min-height: 46px;
+  border: 1.5px solid var(--ink); background: var(--gold-soft);
+  padding: 10px 14px; text-align: center; font-size: 1rem;
+}
+.nowclue b { font-family: var(--mono); font-size: 0.82rem; margin-right: 8px; }
+
+.deskset {
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  margin: 14px auto 26px; max-width: 560px;
+}
+
+.cluecol { flex: 1 1 160px; min-width: 150px; }
+.cluecol h3 {
+  font-family: var(--serif); font-weight: 900; font-size: 1.05rem;
+  border-bottom: 2px solid var(--ink); padding-bottom: 4px; margin-bottom: 8px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.cluecol ol { list-style: none; max-height: 56vh; overflow-y: auto; }
+.cluecol li {
+  padding: 6px 8px; cursor: pointer; font-size: 0.93rem; line-height: 1.32;
+  border-left: 3px solid transparent; margin-bottom: 1px;
+}
+.cluecol li:hover { background: var(--paper-deep); }
+.cluecol li.on { background: var(--gold-soft); border-left-color: var(--red); }
+.cluecol li.full { color: #a49d8f; }
+.cluecol li b { font-family: var(--mono); font-size: 0.78rem; margin-right: 5px; }
+.cluecol li .len { color: #a49d8f; font-size: 0.82rem; }
+
+/* ---------- ghost input (mobile keyboard) ---------- */
+#ghost {
+  position: fixed; top: -120px; left: -120px; width: 44px; height: 44px;
+  opacity: 0.01; border: none; font-size: 16px;
+}
+
+/* ---------- celebration ---------- */
+#sky { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+.veil {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center;
+  justify-content: center; background: rgba(23, 20, 14, 0.5);
+}
+.bulletin {
+  background: var(--paper); border: 2px solid var(--ink); max-width: 92vw;
+  box-shadow: 8px 8px 0 rgba(23,20,14,0.35); padding: 30px 42px; text-align: center;
+  animation: drop .4s cubic-bezier(.2,1.5,.4,1);
+}
+@keyframes drop { from { transform: translateY(-30px) scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.bulletin .kicker {
+  font-family: var(--mono); color: var(--red); letter-spacing: 0.22em;
+  font-size: 0.72rem; text-transform: uppercase;
+}
+.bulletin h2 { font-family: var(--serif); font-weight: 900; font-size: 2rem; margin: 4px 0 6px; }
+.bulletin .time { font-size: 1.05rem; color: var(--ink-soft); margin-bottom: 20px; }
+.bulletin .time b { font-family: var(--mono); color: var(--red); font-size: 1.25rem; }
+.bulletin .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.note {
+  position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); padding: 10px 18px;
+  font-family: var(--mono); font-size: 0.82rem; z-index: 70;
+  box-shadow: 4px 4px 0 rgba(23,20,14,0.25); animation: drop .25s ease;
+  max-width: 92vw; text-align: center;
+}
+
+@media (max-width: 700px) {
+  .page { padding: 0 10px 30px; }
+  .cluecol ol { max-height: none; }
+  .toolbar .spacer { display: none; }
+  .bulletin { padding: 24px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page" id="view-home">
+  <header class="masthead">
+    <div class="dateline"><span id="dateline-text">Atlanta · Est. 2026</span></div>
+    <h1>The Sunday Topol</h1>
+    <p class="motto">Two hundred original crosswords. All the letters fit to print.</p>
+    <div class="thickrule"></div>
+  </header>
+
+  <div class="editions">
+    <button class="edition" data-diff="easy">
+      <span class="kicker">The Daily Edition</span>
+      <h2>Easy</h2>
+      <p class="spec">15 × 15 · everyday knowledge, straight clues</p>
+      <div class="minigrid" aria-hidden="true">
+        <i></i><i class="b"></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i class="b"></i><i></i>
+        <i class="b"></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i class="b"></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i class="b"></i>
+      </div>
+      <div class="tally" id="tally-easy"></div>
+    </button>
+    <button class="edition" data-diff="medium">
+      <span class="kicker">The Sunday Edition</span>
+      <h2>Medium</h2>
+      <p class="spec">21 × 21 · deeper cuts, trickier clues</p>
+      <div class="minigrid" aria-hidden="true">
+        <i class="b"></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i class="b"></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i class="b"></i>
+        <i></i><i class="b"></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i class="b"></i><i></i>
+      </div>
+      <div class="tally" id="tally-medium"></div>
+    </button>
+  </div>
+
+  <p class="footer-note">Your progress and times are saved on this device. The clock only runs while a puzzle is on screen.</p>
+</div>
+
+<div class="page" id="view-index" hidden>
+  <div class="toolbar">
+    <button class="btn plain" id="index-home">← Front Page</button>
+    <h2 id="index-title"></h2>
+    <span class="spacer"></span>
+  </div>
+  <div class="legend">
+    <span><i class="done"></i>Solved</span>
+    <span><i class="prog"></i>In progress</span>
+    <span><i class="fresh"></i>Not started</span>
+  </div>
+  <div class="index-grid" id="index-grid"></div>
+</div>
+
+<div class="page" id="view-solve" hidden>
+  <div class="toolbar">
+    <button class="btn plain" id="solve-back">← Index</button>
+    <h2 id="solve-title"></h2>
+    <span class="clock" id="clock">0:00</span>
+  </div>
+  <div class="solve">
+    <div class="left">
+      <div class="board-wrap"><div class="board" id="board"></div></div>
+      <div class="nowclue" id="nowclue"></div>
+      <div class="deskset">
+        <button class="btn" id="do-check-clue">Check Clue</button>
+        <button class="btn" id="do-check-all">Check Puzzle</button>
+        <button class="btn" id="do-reveal">Reveal Clue</button>
+        <button class="btn red" id="do-clear">Clear</button>
+      </div>
+    </div>
+    <div class="right">
+      <div class="cluecol"><h3>Across</h3><ol id="list-a"></ol></div>
+      <div class="cluecol"><h3>Down</h3><ol id="list-d"></ol></div>
+    </div>
+  </div>
+</div>
+
+<input id="ghost" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" aria-hidden="true">
+<canvas id="sky" hidden></canvas>
+
+<div class="veil" id="veil" hidden>
+  <div class="bulletin">
+    <div class="kicker">★ Special Bulletin ★</div>
+    <h2>Puzzle Solved!</h2>
+    <p class="time" id="veil-time"></p>
+    <div class="row">
+      <button class="btn red" id="veil-next">Next Puzzle →</button>
+      <button class="btn" id="veil-index">Back to Index</button>
+    </div>
+  </div>
+</div>
+
+<div class="note" id="note" hidden></div>
+
+<script src="puzzles.js"></script>
+<script>
+(function () {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const views = { home: $("view-home"), index: $("view-index"), solve: $("view-solve") };
+const NAMES = { easy: "The Daily", medium: "The Sunday" };
+const ghost = $("ghost");
+
+/* ================= storage ================= */
+const Store = {
+  key: (d, i) => `topol-xw:${d}:${i}`,
+  load(d, i) {
+    try { const raw = localStorage.getItem(this.key(d, i)); if (raw) return JSON.parse(raw); }
+    catch (e) {}
+    return null;
+  },
+  save(d, i, st) {
+    try { localStorage.setItem(this.key(d, i), JSON.stringify(st)); } catch (e) {}
+  },
+  status(d, i) {
+    const s = this.load(d, i);
+    if (!s) return "fresh";
+    if (s.done) return "done";
+    if ((s.l || []).some(Boolean) || s.t > 0) return "prog";
+    return "fresh";
+  },
+  tally(d) {
+    const total = PUZZLES[d].length;
+    let done = 0, prog = 0;
+    for (let i = 0; i < total; i++) {
+      const st = this.status(d, i);
+      if (st === "done") done++; else if (st === "prog") prog++;
+    }
+    return { total, done, prog, fresh: total - done - prog };
+  },
+};
+
+/* ================= state ================= */
+const S = {
+  diff: "easy", idx: 0, p: null, n: 0,
+  letters: [], marks: [], entries: [], atCell: {}, active: null, cursor: -1,
+  secs: 0, done: false, tick: null, nagged: false,
+};
+const sol = (ix) => S.p.g[Math.floor(ix / S.n)][ix % S.n];
+const open = (ix) => sol(ix) !== ".";
+
+/* ================= navigation ================= */
+function go(name) {
+  for (const k in views) views[k].hidden = k !== name;
+  FX.stop();
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  haltClock(true);
+  for (const d of ["easy", "medium"]) {
+    const t = Store.tally(d);
+    $("tally-" + d).innerHTML =
+      `<div><span class="n done">${t.done}</span><span class="lbl">Solved</span></div>` +
+      `<div><span class="n prog">${t.prog}</span><span class="lbl">In progress</span></div>` +
+      `<div><span class="n">${t.fresh}</span><span class="lbl">Not started</span></div>`;
+  }
+  go("home");
+}
+
+function goIndex(diff) {
+  haltClock(true);
+  S.diff = diff;
+  $("index-title").textContent = `${NAMES[diff]} — ${diff === "easy" ? "Easy 15×15" : "Medium 21×21"}`;
+  const holder = $("index-grid");
+  holder.innerHTML = "";
+  PUZZLES[diff].forEach((_, i) => {
+    const b = document.createElement("button");
+    b.className = "pz";
+    b.textContent = i + 1;
+    const st = Store.status(diff, i);
+    if (st !== "fresh") b.classList.add(st);
+    if (st === "done") {
+      const s = Store.load(diff, i);
+      const t = document.createElement("span");
+      t.className = "t";
+      t.textContent = mmss(s.dt || s.t || 0);
+      b.appendChild(t);
+    }
+    b.addEventListener("click", () => goSolve(diff, i));
+    holder.appendChild(b);
+  });
+  go("index");
+}
+
+function goSolve(diff, idx) {
+  haltClock(true);
+  loadPuzzle(diff, idx);
+  drawBoard();
+  go("solve");
+  runClock();
+}
+
+/* ================= model ================= */
+function loadPuzzle(diff, idx) {
+  const p = PUZZLES[diff][idx];
+  S.diff = diff; S.idx = idx; S.p = p; S.n = p.s;
+  S.letters = new Array(p.s * p.s).fill("");
+  S.marks = new Array(p.s * p.s).fill("");
+  S.secs = 0; S.done = false; S.nagged = false;
+  const st = Store.load(diff, idx);
+  if (st) {
+    (st.l || []).forEach((ch, i) => { if (ch) S.letters[i] = ch; });
+    (st.m || []).forEach((m, i) => { if (m === "shown") S.marks[i] = m; });
+    S.secs = st.done ? (st.dt || st.t || 0) : (st.t || 0);
+    S.done = !!st.done;
+  }
+  S.entries = []; S.atCell = {};
+  const build = (list, dir) => {
+    for (const [num, r, c, len, clue] of list) {
+      const cells = [];
+      for (let i = 0; i < len; i++) {
+        const ix = (dir === "a" ? r : r + i) * p.s + (dir === "a" ? c + i : c);
+        cells.push(ix);
+        (S.atCell[ix] = S.atCell[ix] || {})[dir] = null; // filled below
+      }
+      S.entries.push({ dir, num, clue, cells });
+    }
+  };
+  build(p.a, "a"); build(p.d, "d");
+  for (const en of S.entries) for (const ix of en.cells) S.atCell[ix][en.dir] = en;
+}
+
+function persist() {
+  const st = { l: S.letters, m: S.marks.map((m) => (m === "shown" ? m : "")), t: S.secs, done: S.done };
+  if (S.done) st.dt = S.secs;
+  Store.save(S.diff, S.idx, st);
+}
+
+/* ================= board rendering ================= */
+let sqs = [];
+function drawBoard() {
+  $("solve-title").textContent = `${NAMES[S.diff]} № ${S.idx + 1}`;
+  const board = $("board");
+  board.innerHTML = "";
+  board.classList.toggle("sz21", S.n >= 21);
+  board.style.gridTemplateColumns = `repeat(${S.n}, 1fr)`;
+  sqs = [];
+  const numAt = {};
+  for (const [num, r, c] of S.p.a) numAt[r * S.n + c] = num;
+  for (const [num, r, c] of S.p.d) numAt[r * S.n + c] = num;
+  for (let ix = 0; ix < S.n * S.n; ix++) {
+    const sq = document.createElement("div");
+    sq.className = "sq";
+    if (open(ix)) {
+      sq.classList.add("open");
+      if (numAt[ix]) {
+        const n = document.createElement("span");
+        n.className = "n"; n.textContent = numAt[ix];
+        sq.appendChild(n);
+      }
+      const l = document.createElement("span");
+      l.className = "l";
+      sq.appendChild(l);
+      sq.addEventListener("pointerdown", (e) => { e.preventDefault(); tapCell(ix); });
+    }
+    board.appendChild(sq);
+    sqs.push(sq);
+  }
+  for (const [dir, listId] of [["a", "list-a"], ["d", "list-d"]]) {
+    const ol = $(listId);
+    ol.innerHTML = "";
+    for (const en of S.entries.filter((e) => e.dir === dir)) {
+      const li = document.createElement("li");
+      li.innerHTML = `<b>${en.num}</b>${esc(en.clue)} <span class="len">(${en.cells.length})</span>`;
+      li.addEventListener("click", () => { pick(en); focusGhost(); });
+      en.li = li;
+      ol.appendChild(li);
+    }
+  }
+  pick(S.entries.find((e) => e.dir === "a") || S.entries[0]);
+  paintClock();
+}
+
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+function paint() {
+  for (let ix = 0; ix < sqs.length; ix++) {
+    if (!open(ix)) continue;
+    const el = sqs[ix];
+    el.querySelector(".l").textContent = S.letters[ix];
+    el.classList.toggle("bad", S.marks[ix] === "bad");
+    el.classList.toggle("shown", S.marks[ix] === "shown");
+    el.classList.remove("word", "here");
+  }
+  if (S.active) for (const ix of S.active.cells) sqs[ix].classList.add("word");
+  if (S.cursor >= 0) sqs[S.cursor].classList.add("here");
+  for (const en of S.entries) {
+    en.li.classList.toggle("on", en === S.active);
+    en.li.classList.toggle("full", en.cells.every((ix) => S.letters[ix]));
+  }
+  const bar = $("nowclue");
+  if (S.active) {
+    const d = S.active.dir === "a" ? "Across" : "Down";
+    bar.innerHTML = `<b>${S.active.num}${d[0]}</b> ${esc(S.active.clue)} <span style="color:var(--ink-soft)">(${S.active.cells.length})</span>`;
+  } else bar.textContent = "";
+}
+
+/* ================= selection & typing ================= */
+function tapCell(ix) {
+  focusGhost();
+  const at = S.atCell[ix] || {};
+  if (ix === S.cursor && S.active) {
+    const other = S.active.dir === "a" ? "d" : "a";
+    if (at[other]) S.active = at[other];
+  } else {
+    S.cursor = ix;
+    const pref = S.active ? S.active.dir : "a";
+    S.active = at[pref] || at[pref === "a" ? "d" : "a"] || null;
+  }
+  paint();
+}
+
+function pick(en) {
+  if (!en) return;
+  S.active = en;
+  const empty = en.cells.find((ix) => !S.letters[ix]);
+  S.cursor = empty !== undefined ? empty : en.cells[0];
+  paint();
+}
+
+function focusGhost() { ghost.value = ""; ghost.focus({ preventScroll: true }); }
+
+function put(ix, ch) {
+  if (S.done) return;
+  S.letters[ix] = ch;
+  if (S.marks[ix] === "bad") S.marks[ix] = "";
+}
+
+function type(ch) {
+  if (S.cursor < 0 || S.done) return;
+  put(S.cursor, ch.toUpperCase());
+  const cells = S.active ? S.active.cells : [S.cursor];
+  const pos = cells.indexOf(S.cursor);
+  let moved = false;
+  for (let j = pos + 1; j < cells.length; j++) {
+    if (!S.letters[cells[j]]) { S.cursor = cells[j]; moved = true; break; }
+  }
+  if (!moved && pos < cells.length - 1) { S.cursor = cells[pos + 1]; moved = true; }
+  paint();
+  maybeWin();
+  if (!moved && !S.done) hop(1);
+}
+
+function rub() {
+  if (S.cursor < 0 || S.done) return;
+  if (S.letters[S.cursor]) put(S.cursor, "");
+  else {
+    const cells = S.active ? S.active.cells : null;
+    if (cells) {
+      const pos = cells.indexOf(S.cursor);
+      if (pos > 0) { S.cursor = cells[pos - 1]; put(S.cursor, ""); }
+    }
+  }
+  paint();
+}
+
+function hop(step) {
+  if (!S.active) return;
+  const i = S.entries.indexOf(S.active);
+  const n = S.entries.length;
+  pick(S.entries[(i + step + n) % n]);
+}
+
+function arrow(dr, dc) {
+  if (S.cursor < 0) return;
+  let r = Math.floor(S.cursor / S.n), c = S.cursor % S.n;
+  for (;;) {
+    r += dr; c += dc;
+    if (r < 0 || c < 0 || r >= S.n || c >= S.n) return;
+    const ix = r * S.n + c;
+    if (open(ix)) {
+      S.cursor = ix;
+      const at = S.atCell[ix] || {};
+      const pref = dr !== 0 ? "d" : "a";
+      S.active = at[pref] || at[pref === "a" ? "d" : "a"] || S.active;
+      paint();
+      return;
+    }
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (views.solve.hidden || !$("veil").hidden) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); type(e.key); }
+  else if (e.key === "Backspace" || e.key === "Delete") { e.preventDefault(); rub(); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); arrow(0, -1); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); arrow(0, 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); arrow(-1, 0); }
+  else if (e.key === "ArrowDown") { e.preventDefault(); arrow(1, 0); }
+  else if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (S.cursor >= 0) tapCell(S.cursor); }
+  else if (e.key === "Tab") { e.preventDefault(); hop(e.shiftKey ? -1 : 1); }
+});
+
+ghost.addEventListener("input", () => {
+  const ch = ghost.value.slice(-1);
+  ghost.value = "";
+  if (/[a-zA-Z]/.test(ch)) type(ch);
+});
+
+/* ================= check / reveal / clear ================= */
+function checkCells(cells) {
+  let bad = 0, blank = 0;
+  for (const ix of cells) {
+    if (!S.letters[ix]) { blank++; continue; }
+    if (S.letters[ix] !== sol(ix)) { S.marks[ix] = "bad"; bad++; }
+  }
+  paint();
+  persist();
+  return { bad, blank };
+}
+
+$("do-check-clue").addEventListener("click", () => {
+  if (!S.active || S.done) return;
+  const { bad, blank } = checkCells(S.active.cells);
+  if (bad) note(`${bad} wrong letter${bad > 1 ? "s" : ""} in this answer — marked in red.`);
+  else if (blank) note("Nothing wrong so far — the answer isn't finished.");
+  else note("This answer is correct.");
+});
+
+$("do-check-all").addEventListener("click", () => {
+  if (S.done) return;
+  const cells = [];
+  for (let ix = 0; ix < S.n * S.n; ix++) if (open(ix)) cells.push(ix);
+  const { bad, blank } = checkCells(cells);
+  if (bad) note(`${bad} wrong letter${bad > 1 ? "s" : ""} — marked in red.`);
+  else if (blank) note(`No mistakes yet — ${blank} square${blank > 1 ? "s" : ""} to go.`);
+  else note("Everything checks out.");
+});
+
+$("do-reveal").addEventListener("click", () => {
+  if (!S.active || S.done) return;
+  for (const ix of S.active.cells) {
+    if (S.letters[ix] !== sol(ix)) { S.letters[ix] = sol(ix); S.marks[ix] = "shown"; }
+  }
+  paint();
+  persist();
+  maybeWin();
+});
+
+$("do-clear").addEventListener("click", () => {
+  if (!confirm("Clear this puzzle and reset its clock?")) return;
+  S.letters.fill(""); S.marks.fill("");
+  S.secs = 0; S.done = false; S.nagged = false;
+  persist();
+  paint();
+  paintClock();
+  runClock();
+});
+
+/* ================= completion ================= */
+function maybeWin() {
+  if (S.done) return;
+  let full = true, right = true;
+  for (let ix = 0; ix < S.n * S.n; ix++) {
+    if (!open(ix)) continue;
+    if (!S.letters[ix]) { full = false; break; }
+    if (S.letters[ix] !== sol(ix)) right = false;
+  }
+  if (!full) return;
+  if (!right) {
+    if (!S.nagged) { S.nagged = true; note("The grid is full but not quite right — try Check Puzzle."); }
+    return;
+  }
+  S.done = true;
+  haltClock(false);
+  persist();
+  paint();
+  $("veil-time").innerHTML = `Solved in <b>${mmss(S.secs)}</b>`;
+  $("veil").hidden = false;
+  FX.launch();
+}
+
+$("veil-index").addEventListener("click", () => { $("veil").hidden = true; goIndex(S.diff); });
+$("veil-next").addEventListener("click", () => {
+  $("veil").hidden = true;
+  const total = PUZZLES[S.diff].length;
+  let next = (S.idx + 1) % total;
+  for (let k = 0; k < total; k++) {
+    const i = (S.idx + 1 + k) % total;
+    if (Store.status(S.diff, i) !== "done") { next = i; break; }
+  }
+  goSolve(S.diff, next);
+});
+
+/* ================= fireworks ================= */
+const FX = (() => {
+  const cv = $("sky"), cx = cv.getContext("2d");
+  let parts = [], on = false, until = 0;
+  function launch() {
+    cv.width = innerWidth; cv.height = innerHeight;
+    cv.hidden = false; parts = []; on = true;
+    until = performance.now() + 5200;
+    let count = 0;
+    const iv = setInterval(() => {
+      if (!on || count++ > 9) { clearInterval(iv); return; }
+      boom(cv.width * (0.12 + Math.random() * 0.76), cv.height * (0.1 + Math.random() * 0.5));
+    }, 400);
+    boom(cv.width / 2, cv.height / 3);
+    requestAnimationFrame(frame);
+  }
+  function boom(x, y) {
+    const hue = Math.random() * 360, n = 60 + (Math.random() * 50) | 0;
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n + Math.random() * 0.12;
+      const v = 1.6 + Math.random() * 4.6;
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+        life: 1, dk: 0.008 + Math.random() * 0.013, hue: hue + Math.random() * 36 - 18 });
+    }
+  }
+  function frame(now) {
+    if (!on) return;
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter((p) => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.045; p.vx *= 0.985; p.vy *= 0.985; p.life -= p.dk;
+      cx.globalAlpha = Math.max(p.life, 0);
+      cx.fillStyle = `hsl(${p.hue},92%,${44 + p.life * 26}%)`;
+      cx.beginPath(); cx.arc(p.x, p.y, 2 + p.life * 1.6, 0, Math.PI * 2); cx.fill();
+    }
+    cx.globalAlpha = 1;
+    if (now > until && parts.length === 0) { stop(); return; }
+    requestAnimationFrame(frame);
+  }
+  function stop() { on = false; parts = []; cv.hidden = true; }
+  return { launch, stop };
+})();
+
+/* ================= the clock =================
+   Runs only while the solve view is open AND the tab is visible. */
+function mmss(sec) {
+  const h = (sec / 3600) | 0, m = ((sec % 3600) / 60) | 0, s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+           : `${m}:${String(s).padStart(2, "0")}`;
+}
+function paintClock() {
+  $("clock").textContent = mmss(S.secs);
+  $("clock").classList.toggle("paused", document.hidden && !S.done);
+}
+function runClock() {
+  if (S.tick) clearInterval(S.tick);
+  if (S.done) return;
+  S.tick = setInterval(() => {
+    if (document.hidden || views.solve.hidden || S.done) return;
+    S.secs++;
+    paintClock();
+    if (S.secs % 5 === 0) persist();
+  }, 1000);
+}
+function haltClock(save) {
+  if (S.tick) { clearInterval(S.tick); S.tick = null; }
+  if (save && S.p) persist();
+}
+document.addEventListener("visibilitychange", () => {
+  if (!views.solve.hidden) { paintClock(); if (document.hidden && S.p) persist(); }
+});
+addEventListener("beforeunload", () => { if (!views.solve.hidden && S.p) persist(); });
+
+/* ================= notes ================= */
+let noteTmr = null;
+function note(msg) {
+  const el = $("note");
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(noteTmr);
+  noteTmr = setTimeout(() => { el.hidden = true; }, 2600);
+}
+
+/* ================= boot ================= */
+$("dateline-text").textContent =
+  new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) +
+  " · Atlanta";
+document.querySelectorAll(".edition").forEach((b) =>
+  b.addEventListener("click", () => goIndex(b.dataset.diff)));
+$("index-home").addEventListener("click", goHome);
+$("solve-back").addEventListener("click", () => goIndex(S.diff));
+goHome();
+})();
+</script>
+</body>
+</html>

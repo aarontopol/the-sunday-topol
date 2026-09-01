@@ -1,0 +1,14 @@
+{
+  "name": "the-sunday-topol",
+  "version": "1.0.0",
+  "description": "Two hundred original crosswords — 15×15 easy dailies and 21×21 medium Sundays. Vanilla JS, no build step.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "puzzles": "python3 generate-puzzles.py puzzles.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
