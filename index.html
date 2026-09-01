@@ -273,6 +273,18 @@ body {
   max-width: 92vw; text-align: center;
 }
 
+/* ---------- cloud sync line ---------- */
+.syncline {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--ink-soft);
+  margin-top: 8px; letter-spacing: 0.04em;
+}
+.syncline button {
+  font-family: inherit; font-size: inherit; letter-spacing: inherit;
+  border: none; background: none; color: var(--red); cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; padding: 0;
+}
+.syncline button:hover { color: #7a2422; }
+
 @media (max-width: 700px) {
   .page { padding: 0 10px 30px; }
   .cluecol ol { max-height: none; }
@@ -288,6 +300,7 @@ body {
     <div class="dateline"><span id="dateline-text">Atlanta · Est. 2026</span></div>
     <h1>The Sunday Topol</h1>
     <p class="motto">Two hundred original crosswords. All the letters fit to print.</p>
+    <p class="syncline" id="syncline" hidden></p>
     <div class="thickrule"></div>
   </header>
 
@@ -511,6 +524,7 @@ function persist() {
   const st = { l: S.letters, m: S.marks.map((m) => (m === "shown" ? m : "")), t: S.secs, done: S.done };
   if (S.done) st.dt = S.secs;
   Store.save(S.diff, S.idx, st);
+  if (window.TopolSync) window.TopolSync.queue(`${S.diff}:${S.idx}`);
 }
 
 /* ================= board rendering ================= */
@@ -862,6 +876,217 @@ document.querySelectorAll(".edition").forEach((b) =>
 $("index-home").addEventListener("click", goHome);
 $("solve-back").addEventListener("click", () => goIndex(S.diff));
 goHome();
+
+// Small surface for the optional cloud-sync module (see the module script
+// below): lets it re-render tallies after a remote merge, and read the
+// storage key scheme without duplicating it.
+window.TopolApp = {
+  storageKey: (d, i) => Store.key(d, i),
+  refresh() {
+    if (!views.home.hidden) goHome();
+    else if (!views.index.hidden) goIndex(S.diff);
+    // an open puzzle keeps its in-memory state; merged data shows on next open
+  },
+};
+})();
+</script>
+
+<script>
+/* ============================================================
+   Firebase config — paste your web app config here (Firebase
+   console → Project settings → Your apps → Web). Leave apiKey
+   empty and the app runs purely on-device: no sign-in line, no
+   network calls, nothing downloaded.
+   ============================================================ */
+window.FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
+};
+</script>
+
+<script type="module">
+/* ============================================================
+   Cloud sync — local-first mirror of puzzle progress.
+   localStorage stays the source of truth for instant response;
+   signing in with Google mirrors progress to Firestore and
+   merges across devices (most-progress-wins per puzzle).
+   Firebase is dynamically imported only when configured, so the
+   unconfigured app ships zero extra bytes.
+   ============================================================ */
+(async () => {
+  const cfg = window.FIREBASE_CONFIG;
+  if (!cfg || !cfg.apiKey) return; // not configured — stay purely local
+
+  const line = document.getElementById("syncline");
+  let fb;
+  try {
+    const V = "11.3.1";
+    const [app, auth, fs] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`),
+    ]);
+    fb = { ...app, ...auth, ...fs };
+  } catch (e) {
+    return; // offline or SDK blocked — app works local-only, no UI shown
+  }
+
+  const appI = fb.initializeApp(cfg);
+  const auth = fb.getAuth(appI);
+  const db = fb.getFirestore(appI);
+
+  /* ---------- local record <-> compact cloud record ---------- */
+  const sizeOf = (key) => {
+    const [d, i] = key.split(":");
+    const p = window.PUZZLES[d] && window.PUZZLES[d][+i];
+    return p ? p.s * p.s : 0;
+  };
+  const lsKey = (key) => {
+    const [d, i] = key.split(":");
+    return window.TopolApp.storageKey(d, +i);
+  };
+  const readLocal = (key) => {
+    try { const raw = localStorage.getItem(lsKey(key)); if (raw) return JSON.parse(raw); }
+    catch (e) {}
+    return null;
+  };
+  const writeLocal = (key, st) => {
+    try { localStorage.setItem(lsKey(key), JSON.stringify(st)); } catch (e) {}
+  };
+  const pack = (st, n) => {
+    const rec = {
+      l: Array.from({ length: n }, (_, i) => (st.l && st.l[i]) || "-").join(""),
+      m: Array.from({ length: n }, (_, i) => (st.m && st.m[i] === "shown" ? "s" : "-")).join(""),
+      t: st.t || 0, done: !!st.done,
+    };
+    if (st.done) rec.dt = st.dt || st.t || 0;
+    return rec;
+  };
+  const unpack = (rec) => {
+    const st = {
+      l: [...rec.l].map((ch) => (ch === "-" ? "" : ch)),
+      m: [...rec.m].map((ch) => (ch === "s" ? "shown" : "")),
+      t: rec.t || 0, done: !!rec.done,
+    };
+    if (rec.done) st.dt = rec.dt || rec.t || 0;
+    return st;
+  };
+  const filled = (st) => (st && st.l ? st.l.filter(Boolean).length : 0);
+  // most-progress-wins: solved beats unsolved, then more letters, then more time
+  const better = (a, b) => { // true if a beats b
+    if (!b) return !!a;
+    if (!a) return false;
+    if (!!a.done !== !!b.done) return !!a.done;
+    const fa = filled(a), fb2 = filled(b);
+    if (fa !== fb2) return fa > fb2;
+    return (a.t || 0) > (b.t || 0);
+  };
+
+  /* ---------- push queue (debounced) ---------- */
+  let user = null, dirty = new Set(), tmr = null, applyingRemote = false;
+  const queue = (key) => {
+    if (applyingRemote) return;
+    dirty.add(key);
+    if (user) { clearTimeout(tmr); tmr = setTimeout(flush, 2500); }
+  };
+  async function flush() {
+    if (!user || dirty.size === 0) return;
+    const batch = [...dirty];
+    dirty.clear();
+    const puzzles = {};
+    for (const key of batch) {
+      const st = readLocal(key);
+      if (st) puzzles[key] = pack(st, sizeOf(key));
+    }
+    if (Object.keys(puzzles).length === 0) return;
+    try {
+      await fb.setDoc(fb.doc(db, "users", user.uid),
+        { puzzles, updated: fb.serverTimestamp() }, { merge: true });
+    } catch (e) {
+      for (const key of batch) dirty.add(key); // retry on next queue/flush
+    }
+  }
+  addEventListener("pagehide", flush);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) flush(); });
+
+  /* ---------- merge cloud -> local ---------- */
+  function mergeDown(cloudPuzzles) {
+    let changed = false;
+    for (const [key, rec] of Object.entries(cloudPuzzles || {})) {
+      if (!sizeOf(key)) continue;
+      const remote = unpack(rec);
+      const local = readLocal(key);
+      if (better(remote, local)) { writeLocal(key, remote); changed = true; }
+      else if (better(local, remote)) dirty.add(key); // local wins — push it up
+    }
+    if (changed) {
+      applyingRemote = true;
+      window.TopolApp.refresh();
+      applyingRemote = false;
+    }
+  }
+
+  /* ---------- initial full sync + live listener ---------- */
+  let unlisten = null;
+  async function startSync() {
+    // push everything local that the cloud doesn't have or loses to
+    for (const d of ["easy", "medium"]) {
+      for (let i = 0; i < window.PUZZLES[d].length; i++) {
+        if (readLocal(`${d}:${i}`)) dirty.add(`${d}:${i}`);
+      }
+    }
+    const ref = fb.doc(db, "users", user.uid);
+    try {
+      const snap = await fb.getDoc(ref);
+      if (snap.exists()) {
+        const cloud = snap.data().puzzles || {};
+        // don't re-push records the cloud already beats or matches
+        for (const key of [...dirty]) {
+          if (cloud[key] && !better(readLocal(key), unpack(cloud[key]))) dirty.delete(key);
+        }
+        mergeDown(cloud);
+      }
+    } catch (e) {}
+    await flush();
+    unlisten = fb.onSnapshot(ref, (snap) => {
+      if (snap.metadata.hasPendingWrites) return; // our own write echoing back
+      if (snap.exists()) mergeDown(snap.data().puzzles || {});
+    }, () => {});
+  }
+
+  /* ---------- sign-in UI ---------- */
+  function paintLine() {
+    line.hidden = false;
+    if (user) {
+      const who = user.displayName || user.email || "you";
+      line.innerHTML = `☁ Synced as ${who.replace(/</g, "&lt;")} · <button id="sync-out">Sign out</button>`;
+      document.getElementById("sync-out").addEventListener("click", async () => {
+        await flush();
+        if (unlisten) { unlisten(); unlisten = null; }
+        fb.signOut(auth);
+      });
+    } else {
+      line.innerHTML = `☁ <button id="sync-in">Sign in with Google</button> to sync your progress across devices`;
+      document.getElementById("sync-in").addEventListener("click", async () => {
+        const provider = new fb.GoogleAuthProvider();
+        try { await fb.signInWithPopup(auth, provider); }
+        catch (e) {
+          try { await fb.signInWithRedirect(auth, provider); } catch (e2) {}
+        }
+      });
+    }
+  }
+
+  fb.onAuthStateChanged(auth, (u) => {
+    user = u;
+    paintLine();
+    if (u) startSync();
+    else if (unlisten) { unlisten(); unlisten = null; }
+  });
 })();
 </script>
 </body>

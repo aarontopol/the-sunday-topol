@@ -52,6 +52,26 @@ Key `topol-xw:<diff>:<idx>` → `{ l: letters[], m: marks[], t: seconds,
 done, dt: finishSeconds }`. Marks: `"shown"` (revealed, persisted) or
 `"bad"` (wrong-check, session-only).
 
+### Cloud sync (Firebase, optional, local-first)
+
+A separate `<script type="module">` at the bottom of `index.html`.
+`window.FIREBASE_CONFIG` empty → module returns immediately: no SDK
+download, no sign-in line. Configured → dynamically imports Firebase v11
+(app/auth/firestore from gstatic CDN), Google sign-in via popup with
+redirect fallback, and mirrors progress to Firestore:
+
+- Doc `users/{uid}` → `{ puzzles: { "easy:12": {l,m,t,done,dt} }, updated }`.
+  `l`/`m` are packed strings (one char per cell; `-` empty, `s` shown).
+- localStorage is always the source of truth for the UI. Uploads are
+  debounced 2.5 s (`TopolSync.queue` called from `persist()`), flushed on
+  pagehide/hidden. Downloads merge per-puzzle with most-progress-wins:
+  done > more filled letters > more seconds.
+- `onSnapshot` keeps other devices live; `hasPendingWrites` guards echo.
+  After a remote merge, `window.TopolApp.refresh()` re-renders tallies;
+  an open puzzle's in-memory state is deliberately left alone.
+- `firestore.rules` restricts each user to their own doc. Web config
+  values are public-safe and committed directly in `index.html`.
+
 ## Known gotchas
 
 - `puzzles.js` is generated with fixed seeds — regenerate via

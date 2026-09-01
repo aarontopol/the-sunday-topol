@@ -16,7 +16,8 @@ python3 -m http.server 8000
 ```
 
 Or just open `index.html` in a browser. Everything runs client-side;
-progress and solve times are saved to `localStorage` on the device.
+progress and solve times are saved to `localStorage` on the device, and
+optionally synced across devices via Firebase (see below).
 
 ## Deploy to Vercel (step by step)
 
@@ -32,6 +33,33 @@ vercel --prod   # promote to production
 
 No environment variables are needed. To hook up a custom domain, add it under
 the project's **Settings → Domains** in the Vercel dashboard.
+
+## Cross-device sync (Firebase, optional)
+
+The app is local-first: it always works signed-out and offline. Signing in
+with Google mirrors progress to Firestore and merges it across devices
+(per puzzle, most progress wins: solved beats unsolved, then more letters,
+then more time). Until Firebase is configured, the sign-in line is hidden
+and nothing Firebase-related is even downloaded.
+
+One-time setup (about five minutes, all in the browser):
+
+1. Go to **console.firebase.google.com** → *Add project* → name it (e.g.
+   `the-sunday-topol`), Analytics off is fine.
+2. **Build → Authentication → Get started** → *Sign-in method* → enable
+   **Google** (pick your support email).
+3. **Authentication → Settings → Authorized domains** → *Add domain* →
+   `the-sunday-topol.vercel.app` (plus any custom domain; `localhost` is
+   pre-authorized).
+4. **Build → Firestore Database → Create database** → production mode →
+   then under *Rules*, paste the contents of `firestore.rules` and publish.
+5. **Project settings (gear) → Your apps → Web (`</>`)** → register the app
+   (no hosting needed) → copy the `firebaseConfig` values.
+6. Paste those values into `window.FIREBASE_CONFIG` near the bottom of
+   `index.html`, commit, and push — Vercel redeploys automatically.
+
+The web config values (apiKey etc.) are safe to commit: they identify the
+project publicly; security comes from the Firestore rules.
 
 ## Architecture
 
